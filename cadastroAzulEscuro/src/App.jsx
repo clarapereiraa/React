@@ -1,4 +1,6 @@
+
 import Cadastro from "./Cadastro/Cadastro"
+
 
 function App() {
   
