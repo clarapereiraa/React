@@ -2,59 +2,69 @@ const connect = require("../db/connect");
 
 module.exports = class userController {
   static async createUser(req, res) {
-    const { cpf, email, password, name } = req.body;
+    const { cpf, email, password, name, data_nascimento } = req.body;
+    const hoje = new Date().toISOString().split("T")[0];
+    const dataNascimentoFormatada = new Date(data_nascimento).toISOString().split("T")[0];
 
-    if (!cpf || !email || !password || !name) {
-      return res
+      if (!cpf || !email || !password || !name || !data_nascimento) {
+        return res
+          .status(400)
+          .json({ error: "Todos os campos devem ser preenchidos" });
+      } // else if
+      else if (dataNascimentoFormatada > hoje){
+        return res
         .status(400)
-        .json({ error: "Todos os campos devem ser preenchidos" });
-    } // else if
-    else if (isNaN(cpf) || cpf.length !== 11) {
-      return res.status(400).json({
-        error: "CPF inválido. Deve conter exatamente 11 dígitos numéricos",
-      });
-    } // else if
-    else if (!email.includes("@")) {
-      return res.status(400).json({ error: "Email inválido. Deve conter @" });
-    } // else if
-    else {
-      // Construção da query INSERT
+        .json({ error: "A data está errada" });
+      }
+      else if (isNaN(cpf) || cpf.length !== 11) {
+        return res.status(400).json({
+          error: "CPF inválido. Deve conter exatamente 11 dígitos numéricos",
+        });
+      } // else if
+      else if (!email.includes("@")) {
+        return res.status(400).json({ error: "Email inválido. Deve conter @" });
+      } // else if
+      else {
+        // Construção da query INSERT
 
-      const query = `INSERT INTO usuario (cpf,password,email,name) VALUES(
+        const query = `INSERT INTO usuario (cpf,password,email,name, data_nascimento) VALUES(
       '${cpf}',
       '${password}',
       '${email}',
-      '${name}')`;
+      '${name}',
+      '${data_nascimento}')`;
 
-      // Executando a query criada
+        // Executando a query criada
 
-      try {
-        connect.query(query, function (err) {
-          if (err) {
-            console.log(err);
-            console.log(err.code);
-            if (err.code === "ER_DUP_ENTRY") {
-              return res
-                .status(400)
-                .json({ error: "O email já está vinculado a outro usuário" });
+        try {
+          connect.query(query, function (err) {
+            if (err) {
+              console.log(err);
+              console.log(err.code);
+              if (err.code === "ER_DUP_ENTRY") {
+                return res
+                  .status(400)
+                  .json({
+                    error: "O email ou CPF já está vinculado a outro usuário",
+                  });
+              } // if
+              else {
+                return res
+                  .status(500)
+                  .json({ error: "Erro Interno do Servidor" });
+              } // else
             } // if
             else {
               return res
-                .status(500)
-                .json({ error: "Erro Interno do Servidor" });
+                .status(201)
+                .json({ message: "Usuário Criado com Sucesso" });
             } // else
-          } // if
-          else {
-            return res
-              .status(201)
-              .json({ message: "Usuário Criado com Sucesso" });
-          } // else
-        }); // connect
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Erro Interno de Servidor" });
-      } // catch
-    } // else
+          }); // connect
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: "Erro Interno de Servidor" });
+        } // catch
+      } // else
   } // CreateUser
 
   static async getAllUsers(req, res) {
@@ -120,47 +130,49 @@ module.exports = class userController {
           console.error(err);
           return res.status(500).json({ error: "Erro Interno do Servidor" });
         }
-        if(results.affectedRows === 0){
-          return res.status(404).json({error:"Usuário não Encontrado"})
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ error: "Usuário não Encontrado" });
         }
-        return res.status(200).json({message:"Usuário Excluido com Sucesso"})
+        return res
+          .status(200)
+          .json({ message: "Usuário Excluido com Sucesso" });
       });
     } catch (error) {
-      console.error(error)
-      return res.status(500).json({error: "Erro Interno do Servidor"})
+      console.error(error);
+      return res.status(500).json({ error: "Erro Interno do Servidor" });
     }
-     
   }
-  //metodo de login 
-  static async loginUser(req, res){
-    const {email, password} = req.body
 
-    if(!email||!password){
-      return res.status(400).json({error:"Email e senha são obrigatorios"})
+  static async loginUser(req, res) {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email e Senha são obrigatórios" });
     }
 
-    const query = `SELECT * FROM usuario WHERE email = ?`
+    const query = `SELECT * FROM usuario WHERE email = ?`;
 
-    try{
-      connect.query(query,[email],(err,results)=>{
-        if(err){
+    try {
+      connect.query(query, [email], (err, results) => {
+        if (err) {
           console.log(err);
-          return res.status(500).json({error: "Erro interno no servidor"})
+          return res.status(500).json({ error: "Erro Interno do Servidor" });
         }
-        if(results.length===0){
-          return res.status(404).json({error: "Usuário não encontrado"})
+        if (results.length === 0) {
+          return res.status(401).json({ error: "Usuário Não Encontrado" });
         }
+
         const user = results[0];
 
-        if(user.password !== password){
-          return res.status(403).json({error: "Senha incorreta"})
+        if (user.password !== password) {
+          return res.status(403).json({ error: "Senha Incorreta" });
         }
 
-        return res.status(200).json({message: "Login bem sucedido", user})
-      })
-    } catch (error){
+        return res.status(200).json({ message: "Login bem-sucedido", user });
+      });
+    } catch (error) {
       console.log(error);
-      return res.status(500).json({error: "Erro interno no servidor"})
+      return res.status(500).json({ error: "Erro Interno do Servidor" });
     }
   }
 };

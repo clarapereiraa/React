@@ -19,11 +19,10 @@ export default function Login() {
   async function handleLogin() {
     await api.postLogin(user).then(
       (response) => {
-        console.log(response.data.message);
-        Alert.alert(response.data.message);
+        Alert.alert("OK", response.data.message);
       },
       (error) => {
-        console.log(error);
+        console.log("Error", error.response.data.error);
       }
     );
   }
@@ -64,16 +63,16 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
   },
-  input:{
-    width:'100%',
-    height:40,
-    borderBottomWidth:1,
-    marginBottom:20,
-    paddingHorizontal:10
+  input: {
+    width: "100%",
+    height: 40,
+    borderBottomWidth: 1,
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
-  button:{
-    backgroundColor:'green',
-    padding:10,
-    borderRadius:5
-  }
+  button: {
+    backgroundColor: "green",
+    padding: 10,
+    borderRadius: 5,
+  },
 });
