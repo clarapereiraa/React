@@ -4,7 +4,7 @@ module.exports = class userController {
   static async createUser(req, res) {
     const { cpf, email, password, name, data_nascimento } = req.body;
     const hoje = new Date().toISOString().split("T")[0];
-    const dataNascimentoFormatada = new Date(data_nascimento).toISOString().split("T")[0];
+    //const dataNascimentoFormatada = new Date(data_nascimento).toISOString().split("T")[0];
 
       if (!cpf || !email || !password || !name || !data_nascimento) {
         return res
